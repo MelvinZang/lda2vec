@@ -4,7 +4,7 @@ import difflib
 import pandas as pd
 
 try:
-    from pyxdameraulevenshtein import damerau_levenshtein_distance_withNPArray
+    from pyxdameraulevenshtein import damerau_levenshtein_distance_ndarray
 except ImportError:
     pass
 
@@ -531,10 +531,16 @@ class Corpus():
         True
         """
         n_words = len(self.compact_to_loose)
-        from gensim.models.word2vec import Word2Vec
-        model = Word2Vec.load_word2vec_format(filename, binary=True)
+        import warnings
+        warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')
+
+        # from gensim.models.word2vec import Word2Vec
+        # import gensim.models.keyedvectors as Word2Vec
+        import gensim.models.keyedvectors as Word2Vec
+
+        model = Word2Vec.KeyedVectors.load_word2vec_format(filename, binary=True)
         n_dim = model.syn0.shape[1]
-        data = np.random.normal(size=(n_words, n_dim)).astype('float32')
+        data = np.random.normal(size=(n_words + 5 , n_dim)).astype('float32')
         data -= data.mean()
         data += model.syn0.mean()
         data /= data.std()
@@ -572,7 +578,7 @@ class Corpus():
                     idx = lengths >= len(word) - 3
                     idx &= lengths <= len(word) + 3
                     sel = choices[idx]
-                    d = damerau_levenshtein_distance_withNPArray(word, sel)
+                    d = damerau_levenshtein_distance_ndarray(word, sel)
                     choice = np.array(keys_raw)[idx][np.argmin(d)]
                     # choice = difflib.get_close_matches(word, choices)[0]
                     vector = model[choice]
